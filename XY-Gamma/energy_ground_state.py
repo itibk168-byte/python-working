@@ -73,7 +73,7 @@ def energy_ground_state_ana(J, gamma, Gamma, alpha, h, N):
     energy_even, _, _ = ground_state_sector(J, gamma, Gamma, alpha, h, N, 1)
     energy_odd, _, _ = ground_state_sector(J, gamma, Gamma, alpha, h, N, -1)
     return min(energy_even, energy_odd)
-
+pyt
 
 
 
