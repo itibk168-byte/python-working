@@ -1,0 +1,33 @@
+{
+  "definition": "F_Q=4 Var(N_f), G=L/2-N_f, f_L=F_Q/L",
+  "source_equations": [
+    59,
+    60,
+    62,
+    69,
+    71
+  ],
+  "boundary": "open",
+  "state": "pure absolute Gaussian ground state",
+  "normal_line_selection": "definite-number ground state when Delta0=0",
+  "sites": 120,
+  "grid_shape": [
+    81,
+    161
+  ],
+  "x_range": [
+    -4,
+    4
+  ],
+  "y_range": [
+    0,
+    2
+  ],
+  "python": "3.14.5",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "matplotlib": "3.11.2",
+  "figure_conclusion": "Bulk density is flat in mu inside |mu/t|<2; finite OBC corrects the plateau and rounds the cusp.",
+  "figure_archetype": "quantitative parameter surface and two complementary line-cut comparisons",
+  "export": "Python matplotlib, editable SVG text and 300 dpi PNG, source CSV"
+}
