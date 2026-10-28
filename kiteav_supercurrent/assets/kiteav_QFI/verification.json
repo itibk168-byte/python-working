@@ -1,0 +1,13 @@
+{
+  "adaptive_reference_checks": 96,
+  "max_absolute_error": 5.2735593669694936e-15,
+  "max_symmetry_error": 8.815864704914134e-15,
+  "quadrature_128_vs_256_max_error": 3.703704010149522e-13,
+  "definition": "F_Q=4 Var(N_f), density=F_Q/N, pure ground state",
+  "boundary": "thermodynamic bulk; finite OBC independently checked",
+  "delta_over_t": [
+    0.3,
+    0.6,
+    1.2
+  ]
+}

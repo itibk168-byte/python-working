@@ -17,4 +17,4 @@ __pycache__/
 .env
 .env.*
 !.env.example
-/kiteav_supercurrent/
+
