@@ -1,0 +1,30 @@
+{
+  "delta": 0.6,
+  "nq": 721,
+  "nmu": 601,
+  "nquad": 256,
+  "generator": "G=N_s/2-N_f; F=4 Var(N_f)",
+  "temperature": 0,
+  "state": "thermodynamic-limit pure current-carrying state",
+  "q_range": [
+    -3.141592653589793,
+    3.141592653589793
+  ],
+  "mu_over_w_range": [
+    -2.4,
+    2.4
+  ],
+  "qfi_min": 0.0,
+  "qfi_max": 0.8547880013012225,
+  "phase_codes": {
+    "0": "gapped trivial",
+    "1": "gapped topological",
+    "2": "gapless"
+  },
+  "curvature_display": "log10(1+abs(f_QQ)+abs(f_mumu)); 99.5 percentile saturation",
+  "curvature_display_max": 2.552490630025935,
+  "smoothing": "none",
+  "note": "Reference phases use analytic criteria, not a QFI threshold. Curvature is grid dependent.",
+  "qstar": 0.6435011087932844,
+  "mu_critical_over_w": 1.6
+}

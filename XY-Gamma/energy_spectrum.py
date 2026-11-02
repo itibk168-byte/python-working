@@ -43,7 +43,7 @@ def plot():
     import matplotlib.pyplot as plt
     from pathlib import Path
 
-    gamma, Gamma, alpha, h = 0.6, 0.6, -0.5, 0.9
+    gamma, Gamma, alpha, h = 0.6, 0.6, -0.5, 1
     k = np.linspace(-np.pi, np.pi, 1001)
     energy = epsilon(k, gamma, Gamma, alpha, h)
 
