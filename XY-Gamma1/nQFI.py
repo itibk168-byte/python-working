@@ -12,7 +12,7 @@ alpha = -0.5
 h = 0.4
 
 # 格点数设置
-N = 16
+N = 24
 
 # 求解哈密顿量的本征值和本征态
 def Hamiltonian(J,gamma,Gamma,alpha,h):
@@ -81,7 +81,11 @@ for iq, q in enumerate(q_grid):
     nQFI_q[iq] = F_q[iq] / (weights @ weights)
 
 i_best = np.argmax(F_q)
-print("q/pi =", q_grid[i_best] / np.pi, "F_Q =", F_q[i_best])
+print("扫描结果：","q/pi =", q_grid[i_best] / np.pi, "F_Q =", F_q[i_best])
+q_infty = np.pi - np.arctan(np.sqrt(-J ** 2 * gamma ** 2 - 4 * alpha * Gamma ** 2) / J)
+print("理论结果：","q_infty/pi=",q_infty / np.pi)
+delta = (q_infty - q_grid[i_best]) / (np.pi * q_grid[i_best])
+print("理论与扫描结果差距：","delta =", delta,"粒子数为：","N=",N)
 
 import matplotlib.pyplot as plt
 
