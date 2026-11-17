@@ -12,7 +12,7 @@ alpha = -0.5
 h = 0.4
 
 # 格点数设置
-N = 24
+N = 16
 
 # 求解哈密顿量的本征值和本征态
 def Hamiltonian(J,gamma,Gamma,alpha,h):
