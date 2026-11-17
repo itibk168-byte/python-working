@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sp
@@ -12,6 +14,8 @@ gamma = 0.6
 Gamma = 0.6
 alpha = -0.5
 h = 0.4
+
+OUTPUT_DIR = Path(r"D:\软件\PyCharm warehouse\python-working\XY-Gamma1\q_peak")
 
 X, Y, Z = spin.sigma_x, spin.sigma_y, spin.sigma_z
 
@@ -35,7 +39,7 @@ def Hamiltonian(N, J, gamma, Gamma, alpha, h):
             if j < k:
                 operator = spin.two_site_kron(A, j, B, k, N)
             else:
-                # 周期边界 N -> 1。调换书写顺序时，算符跟着格点走。
+                # 周期边界 N -> 1。调换格点顺序时，算符随格点调换。
                 operator = spin.two_site_kron(B, k, A, j, N)
 
             H += coefficient * operator
@@ -70,14 +74,13 @@ def q_max(N):
             pair_expect(Z, Z, r) - m_z**2,
         )
 
-    # 在 [0, pi] 上连续扫描余弦权重的波矢。
+    # 在 [0, pi] 上扫描余弦权重的波矢。
     q_grid = np.linspace(0.0, np.pi, 1000)
     sites = np.arange(1, N + 1)
     nQFI_q = np.empty_like(q_grid)
 
     for iq, q in enumerate(q_grid):
         weights = np.cos(q * sites)
-
         T = np.array([
             weights[:N - r] @ weights[r:]
             for r in range(N)
@@ -88,7 +91,6 @@ def q_max(N):
         lambda_xy = 0.5 * (
             K_xx + K_yy + np.hypot(K_xx - K_yy, 2 * K_xy)
         )
-
         nQFI_q[iq] = max(lambda_xy, K_zz) / T[0]
 
     q_peak = q_grid[np.argmax(nQFI_q)]
@@ -101,7 +103,7 @@ def q_max(N):
 
 
 def main():
-    N_values = np.arange(8, 25, 2)
+    N_values = np.arange(8, 19, 2)
     results = []
 
     print(
@@ -121,7 +123,6 @@ def main():
         )
 
     q_peaks, q_refs, signed_pcts = np.asarray(results).T
-
     fig, axes = plt.subplots(1, 2, figsize=(12, 4), layout="constrained")
 
     axes[0].plot(
@@ -146,6 +147,12 @@ def main():
         ax.margins(y=0.18)
         ax.spines[["top", "right"]].set_visible(False)
         ax.grid(axis="y", alpha=0.2)
+
+    # 创建输出目录，并在显示图形前保存 PNG。
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_file = OUTPUT_DIR / "q_peak_vs_N.png"
+    fig.savefig(output_file, dpi=300, bbox_inches="tight")
+    print(f"图片已保存至 {output_file}", flush=True)
 
     plt.show()
 
