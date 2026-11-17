@@ -11,12 +11,12 @@ import my_package.spin_multibody as spin
 J = 1
 gamma = 0.6
 Gamma = 0.6
-alpha = 0.5
-h = 1.4
+alpha = -0.5
+h = 0.4
 
 # 格点数和图片输出目录
 N = 16
-output_dir = Path(r"D:\软件\PyCharm warehouse\python-working\XY-Gamma1\nQFI")
+output_dir = Path(r"D:\python-code\python-working\XY-Gamma1\nQFI")
 
 
 def Hamiltonian(J, gamma, Gamma, alpha, h):

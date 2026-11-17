@@ -50,7 +50,7 @@ ax.set(
 ax.tick_params(direction="out", length=3.5)
 
 # 创建目标目录并保存矢量 PDF
-output_dir = Path(r"D:\软件\PyCharm warehouse\python-working\XY-Gamma1\phase")
+output_dir = Path(r"D:\python-code\python-working\XY-Gamma1\phase")
 output_dir.mkdir(parents=True, exist_ok=True)
 output_file = output_dir / "xy_gamma_phase_diagram.png"
 

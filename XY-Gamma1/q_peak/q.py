@@ -15,7 +15,7 @@ Gamma = 0.6
 alpha = -0.5
 h = 0.4
 
-OUTPUT_DIR = Path(r"D:\软件\PyCharm warehouse\python-working\XY-Gamma1\q_peak")
+OUTPUT_DIR = Path(r"D:\python-code\python-working\XY-Gamma1\q_peak")
 
 X, Y, Z = spin.sigma_x, spin.sigma_y, spin.sigma_z
 

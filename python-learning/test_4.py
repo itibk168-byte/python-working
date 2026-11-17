@@ -13,6 +13,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 
@@ -194,23 +195,19 @@ def configure_plots():
         "axes.spines.right": False,
         "axes.linewidth": 0.75,
         "legend.frameon": False,
-        "pdf.fonttype": 42,
     })
 
 
 def save_figure(fig, output, name):
     fig.savefig(output / f"{name}.png", dpi=450)
-    fig.savefig(output / f"{name}.pdf")
     plt.close(fig)
 
 
-def plot_results(output, model, q, curves, sizes, peaks, q_theory, relative):
-    configure_plots()
+def plot_q_curves(output, model, q, curves, peaks, q_theory):
     colors = plt.cm.viridis(np.linspace(0.10, 0.72, len(curves)))
     settings = rf"$\alpha={model.alpha:g},\ h={model.h:g}$"
     theory_label = r"Theory $q_\infty$"
     figure_size = (4.8, 3.0)
-    line_color = "#00647D"
 
     for column, filename, ylabel in (
         (0, "01_qfi_vs_q", r"$F_Q^{\rm opt}$"),
@@ -221,8 +218,8 @@ def plot_results(output, model, q, curves, sizes, peaks, q_theory, relative):
             ax.plot(q / np.pi, (F, normalized)[column], color=color, lw=1.15,
                     label=rf"$N={N}$")
             if column == 1:
-                q_num, height = peaks[N]
-                ax.plot(q_num / np.pi, height, "o", color=color,
+                peak = peaks[N]
+                ax.plot(peak.q_num / np.pi, peak.nqfi, "o", color=color,
                         markersize=4.5, markeredgecolor="white", markeredgewidth=.65)
         if np.isfinite(q_theory):
             ax.axvline(q_theory / np.pi, color="#747C82", ls="--", lw=.85,
@@ -232,25 +229,85 @@ def plot_results(output, model, q, curves, sizes, peaks, q_theory, relative):
         ax.legend(loc="upper left", ncols=2)
         save_figure(fig, output, filename)
 
-    fig, ax = plt.subplots(figsize=figure_size, layout="constrained")
-    ax.plot(sizes, [peaks[N][0] / np.pi for N in sizes], "o-", color=line_color,
-            markersize=3.4, lw=.9, label=r"Numerical $q_{\rm num}$")
-    if np.isfinite(q_theory):
-        ax.axhline(q_theory / np.pi, color="#747C82", ls="--", lw=.9, label=theory_label)
-    ax.set(xlabel=r"Ring size $N$", ylabel=r"Peak wave vector $q/\pi$", title=settings)
-    ax.legend(loc="upper right")
-    save_figure(fig, output, "03_peak_q_vs_N")
 
-    fig, ax = plt.subplots(figsize=figure_size, layout="constrained")
-    ax.plot(sizes, abs(relative), "o-", color=line_color, markersize=3.4, lw=.9)
-    if np.isfinite(q_theory):
-        ax.axhline(0, color="#747C82", lw=.65, alpha=.55, zorder=0)
+@dataclass(frozen=True)
+class Peak:
+    energy: float
+    parity: int
+    q_num: float
+    nqfi: float
+    qfi: float
+
+
+def scan_model(model, sizes, q, plot_sizes=()):
+    curves, peaks = {}, {}
+    for N in sizes:
+        energy, parity, G, P = ground_state(N, model)
+        C = spin_correlations(G, P)
+        q_num, nqfi_peak = numerical_peak(C)
+        qfi_at_peak = qfi_curves(C, np.array([q_num]))[0][0]
+        peaks[N] = Peak(energy, parity, q_num, nqfi_peak, qfi_at_peak)
+        if N in plot_sizes:
+            curves[N] = qfi_curves(C, q)
+    return theoretical_peak(model), peaks, curves
+
+
+def relative_difference(q_num, q_theory):
+    return 100 * (q_num - q_theory) / q_theory
+
+
+def plot_size_curves(output, h, sizes, scans):
+    sizes = np.asarray(sizes)
+    marks = np.linspace(0, len(sizes) - 1, min(17, len(sizes)), dtype=int).tolist()
+    height_fig, height_ax = plt.subplots(figsize=(4.5, 4.5), layout="constrained")
+    peak_fig, peak_ax = plt.subplots(figsize=(4.8, 3.0), layout="constrained")
+    error_fig, error_ax = plt.subplots(figsize=(4.8, 3.0), layout="constrained")
+    settings = rf"$h={h:g}$"
+    colors, markers = ("#00647D", "#A34830"), ("o", "s")
+    upper = float(sizes[-1])
+    theory_available = False
+
+    for (alpha, (q_theory, peaks)), color, marker in zip(scans.items(), colors, markers):
+        q_num = np.array([peaks[N].q_num for N in sizes])
+        relative = abs(relative_difference(q_num, q_theory))
+        normalized_height = np.array([peaks[N].qfi for N in sizes]) / np.sqrt(sizes)
+        style = dict(color=color, marker=marker, markevery=marks, markersize=3.8,
+                     lw=1.05, label=rf"$\alpha={alpha:.2f}$")
+        peak_ax.plot(sizes, q_num / np.pi, **style)
+        if np.isfinite(q_theory):
+            theory_available = True
+            peak_ax.axhline(q_theory / np.pi, color=color, ls="--", lw=.85,
+                            alpha=.65, zorder=0)
+        error_ax.plot(sizes, relative, **style)
+        height_ax.plot(sizes, normalized_height, **style)
+        upper = max(upper, normalized_height.max())
+
+    peak_ax.set(xlabel=r"Ring size $N$", ylabel=r"Peak wave vector $q/\pi$", title=settings)
+    peak_ax.legend(loc="center right", title=r"Dashed: $q_\infty$" if theory_available else None)
+    save_figure(peak_fig, output, "03_peak_q_vs_N")
+
+    if theory_available:
+        error_ax.axhline(0, color="#747C82", lw=.65, alpha=.55, zorder=0)
     else:
-        ax.text(.5, .5, "Outside the range of the half-width prediction",
-                transform=ax.transAxes, ha="center")
-    ax.set(xlabel=r"Ring size $N$", ylabel=r"$100\,|q_{\rm num}-q_\infty|/q_\infty$ (%)",
-           title=settings)
-    save_figure(fig, output, "04_relative_difference_vs_N")
+        error_ax.text(.5, .5, "Outside the range of the half-width prediction",
+                      transform=error_ax.transAxes, ha="center")
+    error_ax.set(xlabel=r"Ring size $N$",
+                 ylabel=r"$100\,|q_{\rm num}-q_\infty|/q_\infty$ (%)", title=settings)
+    error_ax.legend(loc="upper right")
+    save_figure(error_fig, output, "04_relative_difference_vs_N")
+
+    upper *= 1.045
+    height_ax.plot([0, upper], [0, upper], ls="--", lw=.9, color="#666B72",
+                   label=r"$y=N$", zorder=0)
+    ticks = MaxNLocator(nbins=5, integer=True).tick_values(0, upper)
+    ticks = ticks[(0 <= ticks) & (ticks <= upper)]
+    height_ax.set_xticks(ticks)
+    height_ax.set_yticks(ticks)
+    height_ax.set(xlim=(0, upper), ylim=(0, upper), xlabel=r"Ring size $N$",
+                  ylabel=r"$F_Q^{\rm opt}(q_{\rm num})/\sqrt{N}$", title=settings)
+    height_ax.set_aspect("equal", adjustable="box")
+    height_ax.legend(loc="upper left")
+    save_figure(height_fig, output, "05_qfi_over_sqrt_N_vs_N")
 
 
 def main():
@@ -258,10 +315,13 @@ def main():
     parser.add_argument("--J", type=float, default=1.0)
     parser.add_argument("--gamma", type=float, default=0.6)
     parser.add_argument("--Gamma", type=float, default=0.6)
-    parser.add_argument("--alpha", type=float, default=-0.5)
+    parser.add_argument("--alpha", type=float, default=-0.5,
+                        help="primary alpha for all five figures")
+    parser.add_argument("--compare-alpha", type=float, default=-0.4,
+                        help="second alpha for figures 3–5")
     parser.add_argument("--h", type=float, default=0.4)
     parser.add_argument("--n-min", type=int, default=8)
-    parser.add_argument("--n-max", type=int, default=128)
+    parser.add_argument("--n-max", type=int, default=256)
     parser.add_argument("--n-step", type=int, default=2)
     parser.add_argument("--plot-sizes", type=int, nargs="+", metavar="N",
                         help="ring sizes for the two q curves, chosen from the N scan")
@@ -272,7 +332,7 @@ def main():
     if (args.n_min < 4 or args.n_max < args.n_min or args.n_step < 2
             or any(n % 2 for n in (args.n_min, args.n_max, args.n_step))):
         parser.error("N bounds and step must be even, with 4 <= n-min <= n-max and n-step >= 2")
-    if args.q_points < 2 or not np.isfinite([args.J, args.gamma, args.Gamma, args.alpha, args.h]).all():
+    if args.q_points < 2 or not np.isfinite([args.J, args.gamma, args.Gamma, args.alpha, args.compare_alpha, args.h]).all():
         parser.error("use at least 2 plot samples and finite model parameters")
 
     sizes = list(range(args.n_min, args.n_max + 1, args.n_step))
@@ -281,45 +341,41 @@ def main():
     if not set(plot_sizes).issubset(sizes):
         parser.error("--plot-sizes must belong to the selected N scan")
     model = Model(args.J, args.gamma, args.Gamma, args.alpha, args.h)
-    q_theory = theoretical_peak(model)
-    if not np.isfinite(q_theory):
-        print("Half-width prediction unavailable for these parameters. Relative differences are NaN.")
-
     q = np.linspace(0.0, np.pi, args.q_points)
-    curves, peaks, summary = {}, {}, []
-    for N in sizes:
-        energy, parity, G, P = ground_state(N, model)
-        C = spin_correlations(G, P)
-        q_num, height = numerical_peak(C)
-        peaks[N] = (q_num, height)
-        difference = 100 * (q_num - q_theory) / q_theory
-        summary.append((N, parity, energy, q_num, q_theory, q_num / np.pi,
-                        q_theory / np.pi, height, difference, abs(difference)))
-        if N in plot_sizes:
-            curves[N] = qfi_curves(C, q)
+    q_theory, peaks, curves = scan_model(model, sizes, q, plot_sizes)
+    scans = {model.alpha: (q_theory, peaks)}
+    if args.compare_alpha != model.alpha:
+        comparison = Model(args.J, args.gamma, args.Gamma, args.compare_alpha, args.h)
+        other_theory, other_peaks, _ = scan_model(comparison, sizes, q)
+        scans[comparison.alpha] = (other_theory, other_peaks)
 
     args.output.mkdir(parents=True, exist_ok=True)
     with (args.output / "q_vs_N.csv").open("w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(("N", "parity", "ground_energy", "q_num", "q_theory",
-                         "q_num_over_pi", "q_theory_over_pi", "nQFI_peak",
-                         "relative_signed_pct", "relative_absolute_pct"))
-        writer.writerows(summary)
+        writer.writerow(("alpha", "N", "parity", "ground_energy", "q_num", "q_theory",
+                         "q_num_over_pi", "q_theory_over_pi", "nQFI_peak", "QFI_at_q_num",
+                         "QFI_over_sqrt_N", "relative_signed_pct", "relative_absolute_pct"))
+        for alpha, (predicted, series) in scans.items():
+            for N, peak in series.items():
+                relative = relative_difference(peak.q_num, predicted)
+                writer.writerow((alpha, N, peak.parity, peak.energy, peak.q_num, predicted,
+                                 peak.q_num / np.pi, predicted / np.pi, peak.nqfi, peak.qfi,
+                                 peak.qfi / np.sqrt(N), relative, abs(relative)))
     with (args.output / "q_curves.csv").open("w", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(("N", "q", "q_over_pi", "QFI_opt", "nQFI_opt"))
         for N, (F, normalized) in curves.items():
             writer.writerows(zip(np.full(len(q), N), q, q / np.pi, F, normalized))
 
-    relative = np.asarray([row[-2] for row in summary])
-    plot_results(args.output, model, q, curves, sizes, peaks, q_theory, relative)
-    print(f"q_theory/pi = {q_theory / np.pi:.8f}")
-    for N in plot_sizes:
-        q_num, height = peaks[N]
-        difference = summary[sizes.index(N)][-1]
-        print(f"N={N:4d}   q_num/pi={q_num / np.pi:.8f}   "
-              f"nQFI={height:.8f}   absolute difference={difference:.6f}%")
-    print(f"Four figures and two CSV files saved to {args.output.resolve()}")
+    configure_plots()
+    plot_q_curves(args.output, model, q, curves, peaks, q_theory)
+    plot_size_curves(args.output, model.h, sizes, scans)
+    for alpha, (predicted, series) in scans.items():
+        largest = series[sizes[-1]]
+        print(f"alpha={alpha:g}  q_theory/pi={predicted/np.pi:.8f}  "
+              f"N={sizes[-1]}  F/sqrt(N)={largest.qfi/np.sqrt(sizes[-1]):.8f}")
+    print(f"Five PNG figures and two CSV files saved to {args.output.resolve()}")
+
 
 
 if __name__ == "__main__":
