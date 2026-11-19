@@ -11,8 +11,8 @@ import my_package.spin_multibody as spin
 J = 1
 gamma = 0.6
 Gamma = 0.6
-alpha = -0.5
-h = 0.4
+alpha = 1
+h = 1.1
 
 # 格点数和图片输出目录
 N = 16
@@ -79,7 +79,7 @@ for r in range(1, N):
         pair_expect(Z, Z, r) - m_z**2,
     )
 
-q_grid = np.linspace(0, np.pi, 1000)
+q_grid = np.linspace(0, np.pi, 9)
 F_q = np.empty_like(q_grid)
 nQFI_q = np.empty_like(q_grid)
 sites = np.arange(1, N + 1)

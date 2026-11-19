@@ -75,7 +75,7 @@ def q_max(N):
         )
 
     # 在 [0, pi] 上扫描余弦权重的波矢。
-    q_grid = np.linspace(0.0, np.pi, 1000)
+    q_grid = np.linspace(0.0, np.pi, N // 2 + 1)
     sites = np.arange(1, N + 1)
     nQFI_q = np.empty_like(q_grid)
 
@@ -103,7 +103,7 @@ def q_max(N):
 
 
 def main():
-    N_values = np.arange(8, 19, 2)
+    N_values = np.arange(8, 26, 2)
     results = []
 
     print(
@@ -150,6 +150,22 @@ def main():
 
     # 创建输出目录，并在显示图形前保存 PNG。
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    # 保存图中的五列数值
+    np.savetxt(
+        OUTPUT_DIR / "q_peak_vs_N.csv",
+        np.column_stack((
+            N_values,
+            q_peaks / np.pi,
+            q_refs / np.pi,
+            signed_pcts,
+            np.abs(signed_pcts),
+        )),
+        delimiter=",",
+        header="N,q_peak/pi,q_inf/pi,signed_deviation(%),absolute_deviation(%)",
+        comments="",
+        fmt=["%d", "%.10f", "%.10f", "%.6f", "%.6f"],
+        encoding="utf-8-sig",
+    )
     output_file = OUTPUT_DIR / "q_peak_vs_N.png"
     fig.savefig(output_file, dpi=300, bbox_inches="tight")
     print(f"图片已保存至 {output_file}", flush=True)
