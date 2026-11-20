@@ -15,7 +15,7 @@ Gamma = 0.6
 alpha = -0.5
 h = 0.4
 
-OUTPUT_DIR = Path(r"D:\python-code\python-working\XY-Gamma1\q_peak")
+OUTPUT_DIR = Path(r"/XY-Gamma1/q_peak")
 
 X, Y, Z = spin.sigma_x, spin.sigma_y, spin.sigma_z
 
@@ -103,7 +103,7 @@ def q_max(N):
 
 
 def main():
-    N_values = np.arange(8, 26, 2)
+    N_values = np.arange(8, 20, 2)
     results = []
 
     print(
